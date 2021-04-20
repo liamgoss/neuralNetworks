@@ -29,6 +29,7 @@ traffic lights
 '''
 
 data_dir = "C:/Users/Liam/Desktop/Programming/Python/tensorEnv/Machine Learning/CaughtCha/Dataset"
+
 path, dirs, files = next(os.walk(data_dir))
 image_count = len(files)
 
