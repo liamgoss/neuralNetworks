@@ -73,30 +73,13 @@ def return_subject(sentence):
 
 
 
-
 def get_weather(place):
     api_key = ava_OWM_api_key
-    base_url = "http://api.openweathermap.org/data/2.5/weather?"
+    #base_url = "http://api.openweathermap.org/data/2.5/weather?"
     OpenWMap = pyowm.OWM(api_key)
     mgr = OpenWMap.weather_manager()
     weather = mgr.weather_at_place(place).weather
-    '''
-    rain = weather.will_have_rain()
-    sun = weather.will_have_sun()
-    cloud = weather.will_have_clouds()
-    if rain:
-        print("It is expected to rain in " + place)
-    else:
-        print("It is not expected to rain in " + place)
-    if sun:
-        print("It is expected to be sunny in " + place)
-    else:
-        print("It is not expected to be sunny in " + place)
-    if cloud:
-        print("Cloudy skies are expected in " + place)
-    else:
-        print("Clear skies are expected in " + place)
-    '''
+
     dump_dict = weather.to_dict()
     '''
     {'reference_time': 1622875874, 
@@ -104,7 +87,8 @@ def get_weather(place):
     'sunrise_time': 1622810480, 
     'clouds': 1, 
     'rain': {}, 
-    'snow': {}, 'wind': {'speed': 4.99, 'deg': 321, 'gust': 10.11}, 'humidity': 39, 
+    'snow': {}, 
+    'wind': {'speed': 4.99, 'deg': 321, 'gust': 10.11}, 'humidity': 39, 
     'pressure': {'press': 1011, 'sea_level': None}, 
     'temperature': {'temp': 298.22, 'temp_kf': None, 'temp_max': 301.28, 'temp_min': 294.82, 'feels_like': 297.8}, 
     'status': 'Clear', 
@@ -123,7 +107,7 @@ def get_weather(place):
     high_temp = str(round((int(dump_dict['temperature']['temp_max']) - 273.15) * 9 / 5 + 32)) + " °F"
     low_temp = str(round((int(dump_dict['temperature']['temp_min']) - 273.15) * 9 / 5 + 32)) + " °F"
     feels_like_temp = str(round((int(dump_dict['temperature']['feels_like']) - 273.15) * 9 / 5 + 32)) + " °F"
-
+    
     print("The current temperature is " + curr_temp + " but it feels like " + feels_like_temp)
     print("Today's high is " + high_temp)
     print("Today's low is " + low_temp)
@@ -156,6 +140,7 @@ def return_named_entities(sentence):
 def get_city(dict):
     for key, value in dict.items():
         if value == 'GPE':
+            print("key: ", key)
             return key
     # If no city is found, use user's city
     res = requests.get("https://ipinfo.io")
@@ -176,7 +161,7 @@ def get_city(dict):
     }
     
     '''
-
+    print("res: ", res.json()['city'])
     return res.json()['city']
 
 
@@ -192,12 +177,9 @@ while True:
         exit(0)
 
     elif ints[0]['intent'] == 'weather':
-        #print("Subject is: ", return_subject(message))
-        #pobj, adv = return_context(message)
         city = get_city(return_named_entities(message))
         get_weather(city)
 
 
-        #print(pobj, "; ", adv)
-        # if pobj is CD? then -> weather at time
+
 

@@ -18,8 +18,8 @@
   },
   {"tag":  "weather",
   "patterns": ["What is the weather today", "What is the temperature outside", "How hot is it", "How cold is it",
-    "Is it going to rain", "Do I need sunglasses", "Do I need an umbrella", "Should I take an umbrella", "What is the chance of rain", "Can you show me the weather"],
-  "responses": ["Here is the weather forecast: ", "Today's weather is: ", "Here is your weather update: "]
+    "Is it going to rain", "Do I need sunglasses", "Do I need an umbrella", "Should I take an umbrella", "What is the chance of rain", "Can you show me the weather", "what is the temp outside", "what's the temp"],
+  "responses": ["Here is the weather forecast: ", "Here is your weather update: "]
   },
   {"tag":  "thanks",
   "patterns": ["Thanks", "thank you", "OK", "okay",

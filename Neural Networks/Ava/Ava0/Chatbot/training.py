@@ -63,7 +63,7 @@ hist = model.fit(np.array(train_x), np.array(train_y), epochs=300, batch_size=8,
 # 250 & 8   = .198 and .918
 # 250 & 12  = .276 and .857
 # 250 & 16  = .248 and .899
-# 300 & 8   = .180 and .919
+# 300 & 8   = .180 and .919 - preferred
 # 350 & 16  = .199 and .918
 # 350 & 8   = .213 and .885
 # 450 & 8   = .264 and .851
