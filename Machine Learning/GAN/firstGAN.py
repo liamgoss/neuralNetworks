@@ -21,6 +21,7 @@ import tensorflow as tf
 from PIL import Image, ImageFile
 import pandas as pd
 import os
+import pickle
 import imageio
 import glob
 import h5py
@@ -120,38 +121,45 @@ def load_art_samples():
     # Load custom abstract art dataset from director
     directory = r"C:\Users\Liam\Desktop\Programming\Python\tensorEnv\Machine Learning\GAN\art_dataset"
     batch_size = 32
-    img_height = 480
-    img_width = 480
-    training_data = []
+    img_height = 32
+    img_width = 32
+    if os.path.exists('training_data.ob'):
+        with open('training_data.ob', 'rb') as fp:
+            training_data = pickle.load(fp)
+    else:
+        training_data = []
 
-    folderNames = []
-    num = 0
-    for folder in os.listdir(directory):
-        dir = directory + "\\" + folder
+        folderNames = []
+        num = 0
+        for folder in os.listdir(directory):
+            dir = directory + "\\" + folder
 
-        for sample in os.listdir(dir):
+            for sample in os.listdir(dir):
 
-            sampleLocation = dir + "\\" + sample
-            #print(sampleLocation)
-            img = Image.open(sampleLocation)
-            img.convert('RGB')
-            img.load()
-            img = make_square(img)
-            img = img.resize((img_width, img_height), Image.ANTIALIAS)
-            #img = make_RGB(np.asarray(img))
-            #img = make_RGB(img)
+                sampleLocation = dir + "\\" + sample
+                #print(sampleLocation)
+                img = Image.open(sampleLocation)
+                img.convert('RGB')
+                img.load()
+                img = make_square(img)
+                img = img.resize((img_width, img_height), Image.ANTIALIAS)
+                #img = make_RGB(np.asarray(img))
+                #img = make_RGB(img)
 
-            if np.asarray(img).shape != (480,480,3):
-                print(img, " not within constraints, deleting...")
-                #os.remove(sampleLocation)
-                # potential bad one at 'C:\\Users\\Liam\\Desktop\\Programming\\Python\\tensorEnv\\Machine Learning\\GAN\\art_dataset\\class_b\\00a7b22ed63b9bde2255a21d67658436.jpg\
-            else:
-                num = num + 1
-                print("Sample #", num)
-                training_data.append(np.asarray(img))
+                if np.asarray(img).shape != (32,32,3):
+                    print(img, " not within constraints, deleting...")
+                    #os.remove(sampleLocation)
+                    # potential bad one at 'C:\\Users\\Liam\\Desktop\\Programming\\Python\\tensorEnv\\Machine Learning\\GAN\\art_dataset\\class_b\\00a7b22ed63b9bde2255a21d67658436.jpg\
+                else:
+                    num = num + 1
+                    print("Sample #", num)
+                    training_data.append(np.asarray(img))
 
-                filenames.append(sampleLocation)
-                folderNames.append(folder)
+                    filenames.append(sampleLocation)
+                    folderNames.append(folder)
+        with open('training_data.ob', 'wb') as fp:
+            pickle.dump(training_data, fp)
+
 
 
 
@@ -255,8 +263,9 @@ def summarize_performance(epoch, g_model, d_model, dataset, latent_dim, n_sample
     g_model.save(filename)
 
 
+
 # train the generator and discriminator
-def train(g_model, d_model, gan_model, dataset, latent_dim, n_epochs=200, n_batch=128):
+def train(g_model, d_model, gan_model, dataset, latent_dim, n_epochs=50, n_batch=128):
     bat_per_epo = int(dataset.shape[0] / n_batch)
     #print("dataset.shape[0] = ", dataset.shape[0])
     #bat_per_epo = int(15000/n_batch)
@@ -290,6 +299,36 @@ def train(g_model, d_model, gan_model, dataset, latent_dim, n_epochs=200, n_batc
             summarize_performance(i, g_model, d_model, dataset, latent_dim)
 
 
+
+
+# This involves first loading the model from file, then using it to generate images. The generation of each image requires a point in the latent space as input.
+'''
+Quick question on this, can the above code be used on images of higher resolution as well by simply changing the input 
+and output dimensions from 32x32x3 to a higher value and changing how you upsampled/downsampled things, 
+or basically are there any other tricks involved.
+
+Yes, exactly.
+
+Although you may need more fancy tricks to make the model stable:
+https://machinelearningmastery.com/how-to-code-generative-adversarial-network-hacks/
+
+OR TRY THIS
+
+Yes, you can load the images and use them to train a gan, I show how to load images here:
+https://machinelearningmastery.com/how-to-load-and-manipulate-images-for-deep-learning-in-python-with-pil-pillow/
+
+
+
+No, we don’t train the model on random noise, we use random noise as input to synthesize new images.
+
+You can learn more about how GANs work in general here:
+https://machinelearningmastery.com/start-here/#gans
+
+
+'''
+
+
+
 # size of the latent space
 latent_dim = 100
 # create the discriminator
@@ -301,6 +340,7 @@ gan_model = define_gan(g_model, d_model)
 # load image data
 # dataset = load_real_samples()
 dataset = load_art_samples()
+print("TYPE" + str(type(dataset)))
 # train model
 train(g_model, d_model, gan_model, dataset, latent_dim)
 
