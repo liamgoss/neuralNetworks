@@ -3,4 +3,4 @@ A random compilation of Machine Learning and Neural Networks I have worked on (m
 
 Notable projects present here: Flappy Bird AI, SMS Spam Detection, and ReCaptcha V2 image identificaiton (WIP), art producing GAN (WIP)
 
-Ava, the Advanced Virtual Assistant, is a work-in-progess
+Ava has been moved to a new, dedicated repo
