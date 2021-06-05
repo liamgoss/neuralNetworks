@@ -1,8 +1,8 @@
 import numpy as np
-import random, json, pickle, nltk, spacy, re
+import random, json, pickle, nltk, spacy, re, requests, pyowm
 from nltk.stem import WordNetLemmatizer
-
 from tensorflow.keras.models import load_model
+from ava_config import ava_OWM_api_key
 
 lemmatizer = WordNetLemmatizer()
 intents = json.loads(open('intents.json').read())
@@ -49,26 +49,6 @@ def get_response(intents_list, intents_json):
     return result
 
 
-'''
-    ADJ: adjective
-    ADP: adposition
-    ADV: adverb
-    AUX: auxiliary verb
-    CONJ: coordinating conjunction
-    DET: determiner
-    INTJ: interjection
-    NOUN: noun
-    NUM: numeral
-    PART: particle
-    PRON: pronoun
-    PROPN: proper noun
-    PUNCT: punctuation
-    SCONJ: subordinating conjunction
-    SYM: symbol
-    VERB: verb
-    X: other
-'''
-
 def return_proper_nouns(sentence):
     nlp = spacy.load('en_core_web_sm')
     sent = sentence
@@ -92,128 +72,112 @@ def return_subject(sentence):
 
 
 
-def provide_context(sentence, *args):
-    posList = ['ADJ', 'ADP', 'ADV', 'AUX', 'CONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT',
-               'SCONJ', 'SYM', 'X']
-    depList = ['nsubj', 'aux', 'ROOT', 'prep', 'pcomp', 'compound', 'dobj', 'quantmod', 'pobj']
 
-    def return_pobjs(sentence):
-        nlp = spacy.load('en_core_web_sm')
-        sent = sentence
-        doc = nlp(sent)
-        pobj_toks = [tok for tok in doc if (tok.dep_ == 'pobj')]
-        return pobj_toks
 
-    def return_advs(sentence):
-        nlp = spacy.load('en_core_web_sm')
-        sent = sentence
-        doc = nlp(sent)
-        adv_toks = [tok for tok in doc if (tok.pos_ == 'ADV')]
-        return adv_toks
-
-    def return_preps(sentence):
-        nlp = spacy.load('en_core_web_sm')
-        sent = sentence
-        doc = nlp(sent)
-        prep_toks = [tok for tok in doc if (tok.dep_ == 'prep')]
-        return prep_toks
-
-    def next_word(target, source):
-        for i, w in enumerate(source):
-            if w == target:
-                return source[i + 1]
-
-    #print("argument is: ", sentence)
-    prep = return_preps(sentence.lower())
-    pobj = return_pobjs(sentence.lower())
-    adv = return_advs(sentence.lower())
-    adverbs = ''
-    noAdv = False
-    if not prep:
-        #print("No prepositions")
-        pass
+def get_weather(place):
+    api_key = ava_OWM_api_key
+    base_url = "http://api.openweathermap.org/data/2.5/weather?"
+    OpenWMap = pyowm.OWM(api_key)
+    mgr = OpenWMap.weather_manager()
+    weather = mgr.weather_at_place(place).weather
+    '''
+    rain = weather.will_have_rain()
+    sun = weather.will_have_sun()
+    cloud = weather.will_have_clouds()
+    if rain:
+        print("It is expected to rain in " + place)
     else:
-        if not pobj:
-            #print("No object(s) of preposition")
-            pass
-
-        else:
-            pobj_index = sentence.index(str(pobj[0]))
-            if not adv:
-                #print("No adverb(s)")
-                noAdv = True
-            else:
-                advs_after = []
-                for adverb in adv:
-                    curr_index = sentence.index(str(adverb))
-                    if curr_index > pobj_index:
-                        #print("appending adverb...")
-                        advs_after.append(str(adverb))
-
-            if not noAdv:
-
-                runs = 0
-                for adverb in advs_after:
-                    ind = advs_after.index(adverb)
-                    adverbs += adverb
-                    adverbs += " "
-
-                    if runs != 0:
-                        #print(str(advs_after[ind+1]).lower())
-                        try:
-                            if re.sub(r'[^\w\s]', '', str(next_word(adverb, sentence.lower().split()))) == str(advs_after[ind+1]).lower():
-                                adverbs += adverb
-                                adverbs += " "
-                            else:
-                                pass
-                        except:
-                            pass
-
-            #print("adverbs: ", adverbs)
-            target = str(prep[0])
-            split_sentence = sentence.lower().split()
-
-            if next_word(target, split_sentence) != str(pobj[0]):
-                # try title case on substring
-                after_prep_sentence = sentence.split(str(prep[0]))[1]
-                return provide_context(after_prep_sentence.title(), adverbs)
-
-    #print("strip: ", sentence.strip())
-    if sentence.strip() == sentence.strip().title():
-        # We are in the recursive run
-        advCheck = return_advs(sentence.lower())
-        final_pobj = re.sub(r'[^\w\s]', '', sentence.strip())  # Remove punctuation using regex
-
-
-        if advCheck:
-            advCheckFirst = str(advCheck[0])
-
-            if advCheckFirst.title() in final_pobj:
-                #print('match')
-                final_pobj = str(final_pobj.split(advCheckFirst.title())[0])
-                advCheckString = ' '.join(map(str, advCheck))
-                #advCheckString = advCheckString.title().strip()
-
-                #final_pobj.strip().replace(advCheckString, '')
-                return final_pobj, advCheckString
-        return final_pobj, adverbs  # sentence (without whitespace) is our pobj
+        print("It is not expected to rain in " + place)
+    if sun:
+        print("It is expected to be sunny in " + place)
     else:
-
-        return str(pobj[0]), adverbs
-
-
-def return_context(sentence):
-    sentence_pobj, sentence_adv = provide_context(sentence.lower())
-    print("pobj: ", sentence_pobj)
-    if sentence_adv == '':
-        print("No adverbs")
+        print("It is not expected to be sunny in " + place)
+    if cloud:
+        print("Cloudy skies are expected in " + place)
     else:
-        print("adv: ", sentence_adv)
+        print("Clear skies are expected in " + place)
+    '''
+    dump_dict = weather.to_dict()
+    '''
+    {'reference_time': 1622875874, 
+    'sunset_time': 1622862867, 
+    'sunrise_time': 1622810480, 
+    'clouds': 1, 
+    'rain': {}, 
+    'snow': {}, 'wind': {'speed': 4.99, 'deg': 321, 'gust': 10.11}, 'humidity': 39, 
+    'pressure': {'press': 1011, 'sea_level': None}, 
+    'temperature': {'temp': 298.22, 'temp_kf': None, 'temp_max': 301.28, 'temp_min': 294.82, 'feels_like': 297.8}, 
+    'status': 'Clear', 
+    'detailed_status': 'clear sky', 
+    'weather_code': 800, 
+    'weather_icon_name': '01n', 
+    'visibility_distance': 10000, 
+    'dewpoint': None, 
+    'humidex': None, 
+    'heat_index': None, 
+    'utc_offset': -25200, 
+    'uvi': None, 
+    'precipitation_probability': None}
+    '''
+    curr_temp = str(round((int(dump_dict['temperature']['temp']) - 273.15) * 9 / 5 + 32)) + " °F"
+    high_temp = str(round((int(dump_dict['temperature']['temp_max']) - 273.15) * 9 / 5 + 32)) + " °F"
+    low_temp = str(round((int(dump_dict['temperature']['temp_min']) - 273.15) * 9 / 5 + 32)) + " °F"
+    feels_like_temp = str(round((int(dump_dict['temperature']['feels_like']) - 273.15) * 9 / 5 + 32)) + " °F"
 
+    print("The current temperature is " + curr_temp + " but it feels like " + feels_like_temp)
+    print("Today's high is " + high_temp)
+    print("Today's low is " + low_temp)
 
+def get_weather_forecast_at_time(place, time):
+    '''
+    #time = '2020-08-03 16:30:00+00'
+    api_key = ava_OWM_api_key
+    base_url = "http://api.openweathermap.org/data/2.5/weather?"
+    OpenWMap = pyowm.OWM(api_key)
 
+    rain=forecast.will_be_rainy_at(time) # forecast rain
+    sun=forecast.will_be_sunny_at(time) # forecast sun
+    cloud=forecast.will_be_cloudy_at(time) # forecast clouds
 
+    print("There will be rain :",rain) # print details
+    print("There will be sun :",sun) #print details
+    print("There will be clouds :",cloud) # print details
+    '''
 
+def return_named_entities(sentence):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(sentence)
+    ents = {}
+    for ent in doc.ents:
+        #print(ent.text, ent.start_char, ent.end_char, ent.label_)
+        ents[ent.text] = ent.label_
+    return ents
+
+def get_city(dict):
+    for key, value in dict.items():
+        if value == 'GPE':
+            return key
+    # If no city is found, use user's city
+    res = requests.get("https://ipinfo.io")
+    # https://ipinfo.io/developers
+    '''
+        --example response--
+    {   
+        'ip': 'XX.XXX.XXX.XX',
+        'hostname': 'hostname.host.name',
+        'city': '[city name]',
+        'region': '[state]',
+        'country': '[2 char country code',
+        'loc': '[lat,long]',
+        'org': '[ISP]',
+        'postal': '[zip code]',
+        'timezone': 'America/Los_Angeles',
+        'readme': 'https://ipinfo.io/missingauth'
+    }
+    
+    '''
+
+    return res.json()['city']
 
 
 print("Ava is running!")
@@ -228,5 +192,12 @@ while True:
         exit(0)
 
     elif ints[0]['intent'] == 'weather':
-        print("Subject is: ", return_subject(message))
-        #return_context(message)
+        #print("Subject is: ", return_subject(message))
+        #pobj, adv = return_context(message)
+        city = get_city(return_named_entities(message))
+        get_weather(city)
+
+
+        #print(pobj, "; ", adv)
+        # if pobj is CD? then -> weather at time
+

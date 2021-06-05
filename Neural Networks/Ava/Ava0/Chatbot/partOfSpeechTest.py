@@ -1,4 +1,5 @@
 import spacy, re
+from spacy import displacy
 '''
     --Parts of Speech--
     ADJ:        adjective
@@ -40,6 +41,7 @@ import spacy, re
     NN:         noun, singular or mass
     CD:         cardinal number
 '''
+import ava_config
 
 
 
@@ -50,6 +52,10 @@ import spacy, re
 # Example, New York City shows up as three pronouns, but new york city does not and causes the pobj to be "city"
     # still happens without .lower(), so maybe if pobj in concatenated PROPN following prep?
 #                                       ---------COMPLETED---------
+
+
+# spaCy has built in named entity recognition, I did not know this until after completing this function
+# use the built it on instead, it's much better
 
 def provide_context(sentence, *args):
     posList = ['ADJ', 'ADP', 'ADV', 'AUX', 'CONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON', 'PROPN', 'PUNCT',
@@ -162,10 +168,13 @@ def provide_context(sentence, *args):
 
 
 #sentence = "What is the weather in New York City?"
-sentence = "What is the weather in Fresno right now?"
+#sentence = "What is the weather in Fresno right now?"
 #sentence = "What is the weather in New York City right now?"
+sentence = "Is it going to rain in New York City at 10?"
 
-
+# 10 is CARDINAL
+# tomorrow is DATE
+# noon is TIME
 
 def return_context(sentence):
     sentence_pobj, sentence_adv = provide_context(sentence.lower())
@@ -175,7 +184,30 @@ def return_context(sentence):
     else:
         print("adv: ", sentence_adv)
 
-return_context(sentence)
+#return_context(sentence)
+
+def return_named_entities(sentence):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(sentence)
+    ents = {}
+    for ent in doc.ents:
+        #print(ent.text, ent.start_char, ent.end_char, ent.label_)
+        ents[ent.text] = ent.label_
+    return ents
+
+def get_city(dict):
+    for key, value in dict.items():
+        if value == 'GPE':
+            return key
+    return "City not found"
+
+#city = get_city(return_named_entities(sentence))
+#print(city)
+
+nlp = spacy.load("en_core_web_sm")
+doc = nlp(sentence)
+displacy.serve(doc, style="ent")
+
 
 '''
 for type in depList:
